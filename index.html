@@ -268,46 +268,53 @@
 
     function normalize(text) {
       return (text || "")
-        .replace(/[\\s\\n\\r\\t]+/g, "")
-        .replace(/[.,!?;:'"“”‘’()\\-]/g, "")
+        .normalize("NFC")
+        .replace(/\u00A0/g, " ")
+        .replace(/[\s\n\r\t]+/g, "")
+        .replace(/[.,!?;:'"“”‘’()\-_[\]{}<>~`+=|\\/·…,:]/g, "")
         .trim();
     }
 
     function compare(user, correct) {
       const a = normalize(user);
       const b = normalize(correct);
-      if (!a) return { status: 'wrong', message: '미입력' };
-      if (a === b) return { status: 'correct', message: '정답' };
-      if (b.includes(a) || a.includes(b.slice(0, Math.max(1, Math.floor(b.length * 0.7))))) {
-        return { status: 'partial', message: '거의 맞음' };
+
+      if (!a) return { status: "wrong", message: "미입력" };
+      if (a === b) return { status: "correct", message: "정답" };
+
+      const similarity = b.length > 0 ? a.length / b.length : 0;
+
+      if (b.includes(a) && similarity >= 0.85) {
+        return { status: "partial", message: "거의 맞음" };
       }
-      return { status: 'wrong', message: '오답' };
+
+      return { status: "wrong", message: "오답" };
     }
 
     function renderGroups() {
-      const wrap = document.getElementById('groupList');
-      wrap.innerHTML = '';
+      const wrap = document.getElementById("groupList");
+      wrap.innerHTML = "";
 
       Object.keys(VERSES).forEach(sectionKey => {
         const section = VERSES[sectionKey];
         const sectionGroups = GROUPS.filter(g => g.section === sectionKey);
 
-        const block = document.createElement('div');
-        block.style.marginBottom = '24px';
+        const block = document.createElement("div");
+        block.style.marginBottom = "24px";
 
-        const badge = document.createElement('div');
-        badge.className = 'badge';
+        const badge = document.createElement("div");
+        badge.className = "badge";
         badge.textContent = `${sectionKey}. ${section.title}`;
         block.appendChild(badge);
 
-        const grid = document.createElement('div');
-        grid.className = 'group-grid';
+        const grid = document.createElement("div");
+        grid.className = "group-grid";
 
         sectionGroups.forEach(group => {
-          const btn = document.createElement('button');
-          btn.className = 'group-btn';
-          if (selectedGroup && selectedGroup.id === group.id) btn.classList.add('active');
-          btn.innerHTML = `<div style="font-weight:800;">${group.id}</div><div class="group-sub">${group.fullMode ? '장-절 제공 / 본문 12구절 작성' : group.verses.map(v => v.id).join(' / ')}</div>`;
+          const btn = document.createElement("button");
+          btn.className = "group-btn";
+          if (selectedGroup && selectedGroup.id === group.id) btn.classList.add("active");
+          btn.innerHTML = `<div style="font-weight:800;">${group.id}</div><div class="group-sub">${group.fullMode ? "장-절 제공 / 본문 12구절 작성" : group.verses.map(v => v.id).join(" / ")}</div>`;
           btn.onclick = () => {
             selectedGroup = group;
             renderGroups();
@@ -322,13 +329,13 @@
     }
 
     function renderTest() {
-      const area = document.getElementById('testArea');
+      const area = document.getElementById("testArea");
       if (!selectedGroup) {
-        area.classList.add('hidden');
+        area.classList.add("hidden");
         return;
       }
 
-      area.classList.remove('hidden');
+      area.classList.remove("hidden");
       area.innerHTML = `
         <div class="top-actions">
           <div>
@@ -345,10 +352,10 @@
         <div id="scoreWrap"></div>
       `;
 
-      const verseWrap = document.getElementById('verseWrap');
+      const verseWrap = document.getElementById("verseWrap");
       selectedGroup.verses.forEach((verse, index) => {
-        const card = document.createElement('div');
-        card.className = 'verse-card';
+        const card = document.createElement("div");
+        card.className = "verse-card";
 
         if (selectedGroup.fullMode) {
           card.innerHTML = `
@@ -379,8 +386,8 @@
         verseWrap.appendChild(card);
       });
 
-      document.getElementById('resetBtn').onclick = () => renderTest();
-      document.getElementById('gradeBtn').onclick = gradeCurrent;
+      document.getElementById("resetBtn").onclick = () => renderTest();
+      document.getElementById("gradeBtn").onclick = gradeCurrent;
     }
 
     function gradeCurrent() {
@@ -393,25 +400,25 @@
         const textValue = document.getElementById(`${verse.id}-text`).value;
         const textResult = compare(textValue, verse.text);
         const textEl = document.getElementById(`${verse.id}-text-result`);
-        textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== 'correct' ? `<div class="muted">정답: ${verse.text}</div>` : ''}`;
-        if (textResult.status === 'correct') earned += 1;
+        textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? `<div class="muted">정답: ${verse.text}</div>` : ""}`;
+        if (textResult.status === "correct") earned += 1;
 
         if (!selectedGroup.fullMode) {
           const refValue = document.getElementById(`${verse.id}-ref`).value;
           const refResult = compare(refValue, verse.ref);
           const refEl = document.getElementById(`${verse.id}-ref-result`);
-          refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== 'correct' ? `<div class="muted">정답: ${verse.ref}</div>` : ''}`;
-          if (refResult.status === 'correct') earned += 1;
+          refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? `<div class="muted">정답: ${verse.ref}</div>` : ""}`;
+          if (refResult.status === "correct") earned += 1;
         }
       });
 
       const percent = Math.round((earned / total) * 100);
-      document.getElementById('scoreWrap').innerHTML = `
+      document.getElementById("scoreWrap").innerHTML = `
         <div class="score-box">
           <div class="muted" style="color:#cbd5e1;">채점 결과</div>
           <div class="score-big">${earned} / ${total}</div>
           <div style="font-size:18px;">정답률 ${percent}%</div>
-          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? '전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다.' : '현재는 장-절 1점, 본문 1점으로 계산합니다. 띄어쓰기와 일부 문장부호는 느슨하게 비교합니다.'}</div>
+          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다."}</div>
         </div>
       `;
     }
