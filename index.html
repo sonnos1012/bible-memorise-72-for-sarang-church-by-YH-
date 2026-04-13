@@ -273,6 +273,76 @@
       }
     };
 
+    const BOOK_ALIASES = {
+      "창세기": "창", "창": "창",
+      "출애굽기": "출", "출": "출",
+      "레위기": "레", "레": "레",
+      "민수기": "민", "민": "민",
+      "신명기": "신", "신": "신",
+      "여호수아": "수", "수": "수",
+      "사사기": "삿", "삿": "삿",
+      "룻기": "룻", "룻": "룻",
+      "사무엘상": "삼상", "삼상": "삼상",
+      "사무엘하": "삼하", "삼하": "삼하",
+      "열왕기상": "왕상", "왕상": "왕상",
+      "열왕기하": "왕하", "왕하": "왕하",
+      "역대상": "대상", "대상": "대상",
+      "역대하": "대하", "대하": "대하",
+      "에스라": "스", "스": "스",
+      "느헤미야": "느", "느": "느",
+      "에스더": "에", "에": "에",
+      "욥기": "욥", "욥": "욥",
+      "시편": "시", "시": "시",
+      "잠언": "잠", "잠": "잠",
+      "전도서": "전", "전": "전",
+      "아가": "아", "아": "아",
+      "이사야": "사", "사": "사",
+      "예레미야": "렘", "렘": "렘",
+      "예레미야애가": "애", "애": "애",
+      "에스겔": "겔", "겔": "겔",
+      "다니엘": "단", "단": "단",
+      "호세아": "호", "호": "호",
+      "요엘": "욜", "욜": "욜",
+      "아모스": "암", "암": "암",
+      "오바댜": "옵", "옵": "옵",
+      "요나": "욘", "욘": "욘",
+      "미가": "미", "미": "미",
+      "나훔": "나", "나": "나",
+      "하박국": "합", "합": "합",
+      "스바냐": "습", "습": "습",
+      "학개": "학", "학": "학",
+      "스가랴": "슥", "슥": "슥",
+      "말라기": "말", "말": "말",
+
+      "마태복음": "마", "마": "마",
+      "마가복음": "막", "막": "막",
+      "누가복음": "눅", "눅": "눅",
+      "요한복음": "요", "요": "요",
+      "사도행전": "행", "행": "행",
+      "로마서": "롬", "롬": "롬",
+      "고린도전서": "고전", "고전": "고전",
+      "고린도후서": "고후", "고후": "고후",
+      "갈라디아서": "갈", "갈": "갈",
+      "에베소서": "엡", "엡": "엡",
+      "빌립보서": "빌", "빌": "빌",
+      "골로새서": "골", "골": "골",
+      "데살로니가전서": "살전", "살전": "살전",
+      "데살로니가후서": "살후", "살후": "살후",
+      "디모데전서": "딤전", "딤전": "딤전",
+      "디모데후서": "딤후", "딤후": "딤후",
+      "디도서": "딛", "딛": "딛",
+      "빌레몬서": "몬", "몬": "몬",
+      "히브리서": "히", "히": "히",
+      "야고보서": "약", "약": "약",
+      "베드로전서": "벧전", "벧전": "벧전",
+      "베드로후서": "벧후", "벧후": "벧후",
+      "요한일서": "요일", "요일": "요일",
+      "요한이서": "요이", "요이": "요이",
+      "요한삼서": "요삼", "요삼": "요삼",
+      "유다서": "유", "유": "유",
+      "요한계시록": "계", "계": "계"
+    };
+
     const GROUPS = [];
     Object.entries(VERSES).forEach(([sectionKey, section]) => {
       for (let i = 0; i < section.verses.length; i += 3) {
@@ -297,7 +367,7 @@
     let selectedGroup = null;
     let hintStates = {};
 
-    function normalize(text) {
+    function normalizeText(text) {
       return (text || "")
         .normalize("NFC")
         .replace(/\u00A0/g, " ")
@@ -306,17 +376,37 @@
         .trim();
     }
 
-    function compare(user, correct) {
-      const a = normalize(user);
-      const b = normalize(correct);
+    function normalizeBibleRef(ref) {
+      let value = (ref || "")
+        .normalize("NFC")
+        .replace(/\u00A0/g, " ")
+        .replace(/\s+/g, "")
+        .replace(/[.]/g, "")
+        .trim();
+
+      const books = Object.keys(BOOK_ALIASES).sort((a, b) => b.length - a.length);
+
+      for (const book of books) {
+        if (value.startsWith(book)) {
+          return BOOK_ALIASES[book] + value.slice(book.length);
+        }
+      }
+
+      return value;
+    }
+
+    function compare(user, correct, type = "text") {
+      const a = type === "ref" ? normalizeBibleRef(user) : normalizeText(user);
+      const b = type === "ref" ? normalizeBibleRef(correct) : normalizeText(correct);
 
       if (!a) return { status: "wrong", message: "미입력" };
       if (a === b) return { status: "correct", message: "정답" };
 
-      const similarity = b.length > 0 ? a.length / b.length : 0;
-
-      if (b.includes(a) && similarity >= 0.85) {
-        return { status: "partial", message: "거의 맞음" };
+      if (type === "text") {
+        const similarity = b.length > 0 ? a.length / b.length : 0;
+        if (b.includes(a) && similarity >= 0.85) {
+          return { status: "partial", message: "거의 맞음" };
+        }
       }
 
       return { status: "wrong", message: "오답" };
@@ -511,14 +601,14 @@
 
       selectedGroup.verses.forEach(verse => {
         const textValue = document.getElementById(`${verse.id}-text`).value;
-        const textResult = compare(textValue, verse.text);
+        const textResult = compare(textValue, verse.text, "text");
         const textEl = document.getElementById(`${verse.id}-text-result`);
         textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? `<div class="muted">정답: ${verse.text}</div>` : ""}`;
         if (textResult.status === "correct") earned += 1;
 
         if (!selectedGroup.fullMode) {
           const refValue = document.getElementById(`${verse.id}-ref`).value;
-          const refResult = compare(refValue, verse.ref);
+          const refResult = compare(refValue, verse.ref, "ref");
           const refEl = document.getElementById(`${verse.id}-ref-result`);
           refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? `<div class="muted">정답: ${verse.ref}</div>` : ""}`;
           if (refResult.status === "correct") earned += 1;
@@ -531,7 +621,7 @@
           <div class="muted" style="color:#cbd5e1;">채점 결과</div>
           <div class="score-big">${earned} / ${total}</div>
           <div style="font-size:18px;">정답률 ${percent}%</div>
-          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다."}</div>
+          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다. 성경 책 이름은 풀네임/약자 모두 정답 처리합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다."}</div>
         </div>
       `;
     }
