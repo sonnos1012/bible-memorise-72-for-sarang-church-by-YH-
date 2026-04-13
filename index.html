@@ -85,6 +85,12 @@
     }
     .primary { background: #0f172a; color: white; }
     .secondary { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
+    .hint-btn {
+      margin-top: 10px;
+      background: #eef2ff;
+      color: #1e3a8a;
+      border: 1px solid #c7d2fe;
+    }
     .verse-card {
       border: 1px solid #e2e8f0;
       background: #f8fafc;
@@ -107,6 +113,30 @@
       background: white;
     }
     textarea { min-height: 120px; resize: vertical; }
+    .hint-wrap { margin-top: 10px; }
+    .hint-box {
+      display: block;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .hint-level {
+      display: inline-block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #c2410c;
+      background: #ffedd5;
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
     .result-line { margin-top: 8px; font-size: 14px; }
     .correct { color: #16a34a; font-weight: 700; }
     .partial { color: #d97706; font-weight: 700; }
@@ -141,7 +171,7 @@
   <div class="container">
     <div class="card">
       <div class="muted" style="font-weight:700; font-size:14px;">암송 60구절 백지 테스트</div>
-      <div class="muted" style="margin-top:4px; font-size:14px;">[Latest Update : 26.03.31. / 문의 : 대학2부 하모니 제자반 손예훈(@s0_nique)]</div>
+      <div class="muted" style="margin-top:4px; font-size:14px;">[Latest Update : 26.04.14. / 문의 : 대학2부 하모니 제자반 손예훈(@s0_nique)]</div>
       <h1>어느 말씀을 암송하고 싶으신가요?</h1>
       <div class="muted">아래에서 단원을 고르고, 3구절씩 빈칸 테스트를 해보세요. 장-절과 본문을 각각 적고 채점할 수 있습니다.</div>
     </div>
@@ -265,6 +295,7 @@
     });
 
     let selectedGroup = null;
+    let hintStates = {};
 
     function normalize(text) {
       return (text || "")
@@ -289,6 +320,80 @@
       }
 
       return { status: "wrong", message: "오답" };
+    }
+
+    function escapeHtml(text) {
+      return (text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function makeSentenceHint(text) {
+      return (text || "")
+        .normalize("NFC")
+        .split(/(?<=[.!?])\s+|\n+/)
+        .map(sentence => sentence.trim())
+        .filter(Boolean)
+        .map(sentence => sentence.charAt(0))
+        .join(" / ");
+    }
+
+    function makeWordHint(text) {
+      return (text || "")
+        .normalize("NFC")
+        .split(/\n/)
+        .map(line => {
+          const words = line.trim().split(/\s+/).filter(Boolean);
+          return words.map(word => word.charAt(0)).join(" ");
+        })
+        .join("\n");
+    }
+
+    function getHintButtonLabel(level) {
+      if (level === 0) return "힌트 보기";
+      if (level === 1) return "2단계 힌트 보기";
+      if (level === 2) return "힌트 숨기기";
+      return "힌트 보기";
+    }
+
+    function getHintHtml(verse, level) {
+      if (level === 1) {
+        return `
+          <div class="hint-box">
+            <div class="hint-level">1단계 힌트 · 문장 첫 음절</div>
+            ${escapeHtml(makeSentenceHint(verse.text))}
+          </div>
+        `;
+      }
+
+      if (level === 2) {
+        return `
+          <div class="hint-box">
+            <div class="hint-level">2단계 힌트 · 단어 첫 음절</div>
+            ${escapeHtml(makeWordHint(verse.text))}
+          </div>
+        `;
+      }
+
+      return "";
+    }
+
+    function cycleHint(verseId) {
+      const current = hintStates[verseId] || 0;
+      const next = current === 0 ? 1 : current === 1 ? 2 : 0;
+      hintStates[verseId] = next;
+
+      const verse = selectedGroup.verses.find(v => v.id === verseId);
+      const hintEl = document.getElementById(`${verseId}-hint`);
+      const btnEl = document.getElementById(`${verseId}-hint-btn`);
+
+      if (!verse || !hintEl || !btnEl) return;
+
+      hintEl.innerHTML = getHintHtml(verse, next);
+      btnEl.textContent = getHintButtonLabel(next);
     }
 
     function renderGroups() {
@@ -317,6 +422,7 @@
           btn.innerHTML = `<div style="font-weight:800;">${group.id}</div><div class="group-sub">${group.fullMode ? "장-절 제공 / 본문 12구절 작성" : group.verses.map(v => v.id).join(" / ")}</div>`;
           btn.onclick = () => {
             selectedGroup = group;
+            hintStates = {};
             renderGroups();
             renderTest();
           };
@@ -366,6 +472,8 @@
             <div class="full-ref">${verse.ref}</div>
             <label for="${verse.id}-text">말씀 내용</label>
             <textarea id="${verse.id}-text" placeholder="본문을 적어보세요"></textarea>
+            <button type="button" class="action hint-btn" id="${verse.id}-hint-btn" onclick="cycleHint('${verse.id}')">힌트 보기</button>
+            <div id="${verse.id}-hint" class="hint-wrap"></div>
             <div id="${verse.id}-text-result" class="result-line"></div>
           `;
         } else {
@@ -379,6 +487,8 @@
             <div id="${verse.id}-ref-result" class="result-line"></div>
             <label for="${verse.id}-text">말씀 내용</label>
             <textarea id="${verse.id}-text" placeholder="본문을 적어보세요"></textarea>
+            <button type="button" class="action hint-btn" id="${verse.id}-hint-btn" onclick="cycleHint('${verse.id}')">힌트 보기</button>
+            <div id="${verse.id}-hint" class="hint-wrap"></div>
             <div id="${verse.id}-text-result" class="result-line"></div>
           `;
         }
@@ -386,7 +496,10 @@
         verseWrap.appendChild(card);
       });
 
-      document.getElementById("resetBtn").onclick = () => renderTest();
+      document.getElementById("resetBtn").onclick = () => {
+        hintStates = {};
+        renderTest();
+      };
       document.getElementById("gradeBtn").onclick = gradeCurrent;
     }
 
@@ -418,7 +531,7 @@
           <div class="muted" style="color:#cbd5e1;">채점 결과</div>
           <div class="score-big">${earned} / ${total}</div>
           <div style="font-size:18px;">정답률 ${percent}%</div>
-          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다."}</div>
+          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다."}</div>
         </div>
       `;
     }
