@@ -664,6 +664,7 @@
               <h3>${index + 1}번 구절</h3>
               <div class="button-row">
                 <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
+                <button type="button" class="action primary" onclick="gradeVerse('${verse.id}')">채점</button>
                 <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
               </div>
             </div>
@@ -680,6 +681,7 @@
               <h3>${index + 1}번 구절</h3>
               <div class="button-row">
                 <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
+                <button type="button" class="action primary" onclick="gradeVerse('${verse.id}')">채점</button>
                 <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
               </div>
             </div>
@@ -702,6 +704,33 @@
         renderTest();
       };
       document.getElementById("gradeBtn").onclick = gradeCurrent;
+    }
+
+
+    function gradeVerse(verseId) {
+      if (!selectedGroup) return false;
+
+      const verse = selectedGroup.verses.find(v => v.id === verseId);
+      if (!verse) return false;
+
+      let earned = 0;
+      let total = selectedGroup.fullMode ? 1 : 2;
+
+      const textValue = document.getElementById(`${verse.id}-text`).value;
+      const textResult = compare(textValue, verse.text, "text");
+      const textEl = document.getElementById(`${verse.id}-text-result`);
+      textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? makeDiffHtml(textValue, verse.text, "text") : ""}`;
+      if (textResult.status === "correct") earned += 1;
+
+      if (!selectedGroup.fullMode) {
+        const refValue = document.getElementById(`${verse.id}-ref`).value;
+        const refResult = compare(refValue, verse.ref, "ref");
+        const refEl = document.getElementById(`${verse.id}-ref-result`);
+        refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? makeDiffHtml(refValue, verse.ref, "ref") : ""}`;
+        if (refResult.status === "correct") earned += 1;
+      }
+
+      return earned === total;
     }
 
     function gradeCurrent() {
