@@ -138,6 +138,37 @@
       padding: 4px 8px;
     }
     .result-line { margin-top: 8px; font-size: 14px; }
+    .diff-box {
+      margin-top: 10px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #334155;
+      line-height: 1.9;
+      word-break: break-all;
+    }
+    .diff-label {
+      display: inline-block;
+      min-width: 54px;
+      font-weight: 800;
+      color: #64748b;
+    }
+    .diff-good { color: #16a34a; font-weight: 800; }
+    .diff-bad {
+      color: #dc2626;
+      font-weight: 900;
+      background: #fee2e2;
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+    .diff-missing {
+      color: #b45309;
+      font-weight: 900;
+      background: #fef3c7;
+      border-radius: 4px;
+      padding: 0 2px;
+    }
     .correct { color: #16a34a; font-weight: 700; }
     .partial { color: #d97706; font-weight: 700; }
     .wrong { color: #dc2626; font-weight: 700; }
@@ -412,6 +443,80 @@
       return { status: "wrong", message: "오답" };
     }
 
+
+    function makeDiffHtml(user, correct, type = "text") {
+      const a = Array.from(type === "ref" ? normalizeBibleRef(user) : normalizeText(user));
+      const b = Array.from(type === "ref" ? normalizeBibleRef(correct) : normalizeText(correct));
+      const m = a.length;
+      const n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+        }
+      }
+
+      let i = m;
+      let j = n;
+      const userParts = [];
+      const correctParts = [];
+
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && a[i - 1] === b[j - 1] && dp[i][j] === dp[i - 1][j - 1]) {
+          userParts.unshift(`<span class="diff-good">${escapeHtml(a[i - 1])}</span>`);
+          correctParts.unshift(`<span class="diff-good">${escapeHtml(b[j - 1])}</span>`);
+          i--;
+          j--;
+        } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+          userParts.unshift(`<span class="diff-bad">${escapeHtml(a[i - 1])}</span>`);
+          correctParts.unshift(`<span class="diff-missing">${escapeHtml(b[j - 1])}</span>`);
+          i--;
+          j--;
+        } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+          userParts.unshift(`<span class="diff-bad">${escapeHtml(a[i - 1])}</span>`);
+          correctParts.unshift(`<span class="diff-missing">∅</span>`);
+          i--;
+        } else {
+          userParts.unshift(`<span class="diff-bad">∅</span>`);
+          correctParts.unshift(`<span class="diff-missing">${escapeHtml(b[j - 1])}</span>`);
+          j--;
+        }
+      }
+
+      return `
+        <div class="diff-box">
+          <div><span class="diff-label">내 답</span>${userParts.join("")}</div>
+          <div><span class="diff-label">정답</span>${correctParts.join("")}</div>
+        </div>
+      `;
+    }
+
+    function clearVerse(verseId, fullMode) {
+      const textInput = document.getElementById(`${verseId}-text`);
+      const textResult = document.getElementById(`${verseId}-text-result`);
+      const refInput = document.getElementById(`${verseId}-ref`);
+      const refResult = document.getElementById(`${verseId}-ref-result`);
+      const hint = document.getElementById(`${verseId}-hint`);
+      const hintBtn = document.getElementById(`${verseId}-hint-btn`);
+
+      if (textInput) textInput.value = "";
+      if (textResult) textResult.innerHTML = "";
+      if (!fullMode && refInput) refInput.value = "";
+      if (!fullMode && refResult) refResult.innerHTML = "";
+      if (hint) hint.innerHTML = "";
+      if (hintBtn) hintBtn.textContent = "힌트 보기";
+      hintStates[verseId] = 0;
+    }
+
     function escapeHtml(text) {
       return (text || "")
         .replace(/&/g, "&amp;")
@@ -557,7 +662,10 @@
           card.innerHTML = `
             <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px;">
               <h3>${index + 1}번 구절</h3>
-              <div class="muted" style="font-size:14px;">${verse.id}</div>
+              <div class="button-row">
+                <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
+                <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
+              </div>
             </div>
             <div class="full-ref">${verse.ref}</div>
             <label for="${verse.id}-text">말씀 내용</label>
@@ -570,7 +678,10 @@
           card.innerHTML = `
             <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px;">
               <h3>${index + 1}번 구절</h3>
-              <div class="muted" style="font-size:14px;">${verse.id}</div>
+              <div class="button-row">
+                <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
+                <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
+              </div>
             </div>
             <label for="${verse.id}-ref">말씀 장-절</label>
             <input id="${verse.id}-ref" placeholder="예시 : 창세기 1:1" />
@@ -603,14 +714,14 @@
         const textValue = document.getElementById(`${verse.id}-text`).value;
         const textResult = compare(textValue, verse.text, "text");
         const textEl = document.getElementById(`${verse.id}-text-result`);
-        textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? `<div class="muted">정답: ${verse.text}</div>` : ""}`;
+        textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? makeDiffHtml(textValue, verse.text, "text") : ""}`;
         if (textResult.status === "correct") earned += 1;
 
         if (!selectedGroup.fullMode) {
           const refValue = document.getElementById(`${verse.id}-ref`).value;
           const refResult = compare(refValue, verse.ref, "ref");
           const refEl = document.getElementById(`${verse.id}-ref-result`);
-          refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? `<div class="muted">정답: ${verse.ref}</div>` : ""}`;
+          refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? makeDiffHtml(refValue, verse.ref, "ref") : ""}`;
           if (refResult.status === "correct") earned += 1;
         }
       });
