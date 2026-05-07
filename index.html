@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>암송 60구절 백지 테스트</title>
+  <title>📖 말씀 암송 도우미 ✨</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -40,32 +40,33 @@
       font-weight: 700;
       margin-bottom: 12px;
     }
-    .group-grid {
+    .section-block { margin-bottom: 24px; }
+    .verse-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
     }
-    .group-btn {
+    .verse-btn {
       border: 1px solid #cbd5e1;
       background: white;
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 12px 14px;
       cursor: pointer;
       text-align: left;
       transition: 0.2s;
-      font-size: 16px;
+      font-size: 15px;
     }
-    .group-btn:hover { background: #f8fafc; }
-    .group-btn.active {
+    .verse-btn:hover { background: #f8fafc; }
+    .verse-btn.active {
       background: #0f172a;
       color: white;
       border-color: #0f172a;
     }
-    .group-sub { font-size: 13px; margin-top: 6px; opacity: 0.8; }
-    .top-actions {
+    .verse-ref { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+    .learn-header {
       display: flex;
       justify-content: space-between;
-      align-items: end;
+      align-items: flex-end;
       gap: 16px;
       flex-wrap: wrap;
       margin-bottom: 20px;
@@ -77,34 +78,61 @@
     }
     button.action {
       border: 0;
-      border-radius: 16px;
-      padding: 12px 18px;
-      font-size: 15px;
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-size: 14px;
       cursor: pointer;
       font-weight: 700;
     }
     .primary { background: #0f172a; color: white; }
-    .secondary { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
-    .hint-btn {
-      margin-top: 10px;
-      background: #eef2ff;
-      color: #1e3a8a;
-      border: 1px solid #c7d2fe;
-    }
-    .verse-card {
+    .secondary { background: white; color: #0f172a; border: 1px solid #cbd5e1 !important; }
+
+    .step-card {
       border: 1px solid #e2e8f0;
       background: #f8fafc;
       border-radius: 22px;
       padding: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 40px;
+    }
+    .step-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .prompt-box {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 800;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      margin: 10px 0 14px;
+    }
+    .full-text-box {
+      background: #ecfdf5;
+      color: #166534;
+      border: 1px solid #86efac;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 700;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      margin: 10px 0 14px;
     }
     label {
       display: block;
-      margin: 14px 0 8px;
+      margin: 12px 0 8px;
       font-weight: 700;
     }
-    input, textarea {
+    textarea {
       width: 100%;
+      min-height: 100px;
+      resize: vertical;
       border: 1px solid #cbd5e1;
       border-radius: 16px;
       padding: 12px 14px;
@@ -112,32 +140,11 @@
       font-family: inherit;
       background: white;
     }
-    textarea { min-height: 120px; resize: vertical; }
-    .hint-wrap { margin-top: 10px; }
-    .hint-box {
-      display: block;
-      background: #fff7ed;
-      color: #9a3412;
-      border: 1px solid #fdba74;
-      border-radius: 14px;
-      padding: 12px 14px;
+    .result-line {
+      margin-top: 14px;
+      margin-bottom: 12px;
       font-size: 14px;
-      font-weight: 700;
-      line-height: 1.8;
-      white-space: pre-wrap;
-      word-break: keep-all;
     }
-    .hint-level {
-      display: inline-block;
-      margin-bottom: 6px;
-      font-size: 12px;
-      font-weight: 800;
-      color: #c2410c;
-      background: #ffedd5;
-      border-radius: 999px;
-      padding: 4px 8px;
-    }
-    .result-line { margin-top: 8px; font-size: 14px; }
     .diff-box {
       margin-top: 10px;
       background: white;
@@ -169,50 +176,104 @@
       border-radius: 4px;
       padding: 0 2px;
     }
-    .correct { color: #16a34a; font-weight: 700; }
-    .partial { color: #d97706; font-weight: 700; }
-    .wrong { color: #dc2626; font-weight: 700; }
-    .score-box {
+    .correct { color: #16a34a; font-weight: 800; }
+    .partial { color: #d97706; font-weight: 800; }
+    .wrong { color: #dc2626; font-weight: 800; }
+    .hidden { display: none; }
+    .progress-box {
       background: #0f172a;
       color: white;
-      border-radius: 24px;
-      padding: 24px;
-      margin-top: 24px;
+      border-radius: 22px;
+      padding: 20px;
+      margin-top: 20px;
     }
-    .score-big { font-size: 42px; font-weight: 800; margin: 8px 0; }
-    .hidden { display: none; }
-    .full-ref {
-      display: inline-block;
-      margin-bottom: 10px;
-      padding: 6px 10px;
+    .small-note { font-size: 13px; color: #64748b; }
+    .top-mini-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(248,250,252,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 0;
+      margin-bottom: 16px;
+    }
+    .mini-row {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 4px;
+    }
+    .mini-btn {
+      border: 1px solid #cbd5e1;
+      background: white;
       border-radius: 999px;
-      background: #e2e8f0;
-      color: #334155;
-      font-size: 14px;
-      font-weight: 700;
+      padding: 3px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      text-align: center;
     }
+    .mini-btn:hover { background: #f1f5f9; }
+    
+    #stepWrap {
+      display: flex;
+      flex-direction: column;
+      row-gap: 200px;
+    }
+
+    .step-card {
+      margin-bottom: 0 !important;
+    }
+
+    #stepWrap .step-card {
+      margin-bottom: 0 !important;
+      padding-bottom: 28px;
+    }
+
+    #stepWrap .result-line {
+      margin-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    #stepWrap .diff-box {
+      margin-top: 14px;
+      margin-bottom: 12px;
+    }
+
     @media (max-width: 640px) {
       .container { padding: 16px 16px 72px; }
+      .mini-row { padding: 0 16px; }
       h1 { font-size: 34px; }
       h2 { font-size: 24px; }
     }
   </style>
 </head>
 <body>
+  <div class="top-mini-nav">
+    <div class="mini-row" id="miniNav"></div>
+  </div>
+
   <div class="container">
     <div class="card">
-      <div class="muted" style="font-weight:700; font-size:14px;">암송 60구절 백지 테스트</div>
-      <div class="muted" style="margin-top:4px; font-size:14px;">[Latest Update : 26.04.14. / 문의 : 대학2부 하모니 제자반 손예훈(@s0_nique)]</div>
-      <h1>어느 말씀을 암송하고 싶으신가요?</h1>
-      <div class="muted">아래에서 단원을 고르고, 3구절씩 빈칸 테스트를 해보세요. 장-절과 본문을 각각 적고 채점할 수 있습니다.</div>
+      <div class="muted" style="font-weight:700; font-size:14px;">
+  📖 말씀 암송 도우미 ✨
+</div>
+
+<div class="muted" style="margin-top:4px; font-size:14px;">
+  [Latest Update : 26.05.06. / 문의 : 대학2부 하모니 제자반 손예훈(@s0_nique)]
+</div>
+      <h1>어느 말씀을 학습하고 싶으신가요?</h1>
+      <div class="muted">구절을 하나 선택하면, 아래에서 따라쓰기 → 점진적 빈칸 → 거의 백지 단계까지 차례대로 연습할 수 있습니다.</div>
     </div>
 
-    <div class="card">
+    <div class="card" id="selectCard">
       <h2>말씀 선택</h2>
-      <div id="groupList"></div>
+      <div id="verseList"></div>
     </div>
 
-    <div id="testArea" class="card hidden"></div>
+    <div id="learnArea" class="card hidden"></div>
   </div>
 
   <script>
@@ -304,99 +365,7 @@
       }
     };
 
-    const BOOK_ALIASES = {
-      "창세기": "창", "창": "창",
-      "출애굽기": "출", "출": "출",
-      "레위기": "레", "레": "레",
-      "민수기": "민", "민": "민",
-      "신명기": "신", "신": "신",
-      "여호수아": "수", "수": "수",
-      "사사기": "삿", "삿": "삿",
-      "룻기": "룻", "룻": "룻",
-      "사무엘상": "삼상", "삼상": "삼상",
-      "사무엘하": "삼하", "삼하": "삼하",
-      "열왕기상": "왕상", "왕상": "왕상",
-      "열왕기하": "왕하", "왕하": "왕하",
-      "역대상": "대상", "대상": "대상",
-      "역대하": "대하", "대하": "대하",
-      "에스라": "스", "스": "스",
-      "느헤미야": "느", "느": "느",
-      "에스더": "에", "에": "에",
-      "욥기": "욥", "욥": "욥",
-      "시편": "시", "시": "시",
-      "잠언": "잠", "잠": "잠",
-      "전도서": "전", "전": "전",
-      "아가": "아", "아": "아",
-      "이사야": "사", "사": "사",
-      "예레미야": "렘", "렘": "렘",
-      "예레미야애가": "애", "애": "애",
-      "에스겔": "겔", "겔": "겔",
-      "다니엘": "단", "단": "단",
-      "호세아": "호", "호": "호",
-      "요엘": "욜", "욜": "욜",
-      "아모스": "암", "암": "암",
-      "오바댜": "옵", "옵": "옵",
-      "요나": "욘", "욘": "욘",
-      "미가": "미", "미": "미",
-      "나훔": "나", "나": "나",
-      "하박국": "합", "합": "합",
-      "스바냐": "습", "습": "습",
-      "학개": "학", "학": "학",
-      "스가랴": "슥", "슥": "슥",
-      "말라기": "말", "말": "말",
-
-      "마태복음": "마", "마": "마",
-      "마가복음": "막", "막": "막",
-      "누가복음": "눅", "눅": "눅",
-      "요한복음": "요", "요": "요",
-      "사도행전": "행", "행": "행",
-      "로마서": "롬", "롬": "롬",
-      "고린도전서": "고전", "고전": "고전",
-      "고린도후서": "고후", "고후": "고후",
-      "갈라디아서": "갈", "갈": "갈",
-      "에베소서": "엡", "엡": "엡",
-      "빌립보서": "빌", "빌": "빌",
-      "골로새서": "골", "골": "골",
-      "데살로니가전서": "살전", "살전": "살전",
-      "데살로니가후서": "살후", "살후": "살후",
-      "디모데전서": "딤전", "딤전": "딤전",
-      "디모데후서": "딤후", "딤후": "딤후",
-      "디도서": "딛", "딛": "딛",
-      "빌레몬서": "몬", "몬": "몬",
-      "히브리서": "히", "히": "히",
-      "야고보서": "약", "약": "약",
-      "베드로전서": "벧전", "벧전": "벧전",
-      "베드로후서": "벧후", "벧후": "벧후",
-      "요한일서": "요일", "요일": "요일",
-      "요한이서": "요이", "요이": "요이",
-      "요한삼서": "요삼", "요삼": "요삼",
-      "유다서": "유", "유": "유",
-      "요한계시록": "계", "계": "계"
-    };
-
-    const GROUPS = [];
-    Object.entries(VERSES).forEach(([sectionKey, section]) => {
-      for (let i = 0; i < section.verses.length; i += 3) {
-        const chunk = section.verses.slice(i, i + 3);
-        GROUPS.push({
-          id: `${sectionKey}-${chunk.map(v => v.id.split('-')[1]).join(',')}`,
-          section: sectionKey,
-          title: section.title,
-          verses: chunk,
-          fullMode: false
-        });
-      }
-      GROUPS.push({
-        id: `${sectionKey}-전체`,
-        section: sectionKey,
-        title: section.title,
-        verses: section.verses,
-        fullMode: true
-      });
-    });
-
-    let selectedGroup = null;
-    let hintStates = {};
+    let selectedVerse = null;
 
     function normalizeText(text) {
       return (text || "")
@@ -407,46 +376,22 @@
         .trim();
     }
 
-    function normalizeBibleRef(ref) {
-      let value = (ref || "")
-        .normalize("NFC")
-        .replace(/\u00A0/g, " ")
-        .replace(/\s+/g, "")
-        .replace(/[.]/g, "")
-        .trim();
-
-      const books = Object.keys(BOOK_ALIASES).sort((a, b) => b.length - a.length);
-
-      for (const book of books) {
-        if (value.startsWith(book)) {
-          return BOOK_ALIASES[book] + value.slice(book.length);
-        }
-      }
-
-      return value;
-    }
-
-    function compare(user, correct, type = "text") {
-      const a = type === "ref" ? normalizeBibleRef(user) : normalizeText(user);
-      const b = type === "ref" ? normalizeBibleRef(correct) : normalizeText(correct);
-
+    function compare(user, correct) {
+      const a = normalizeText(user);
+      const b = normalizeText(correct);
       if (!a) return { status: "wrong", message: "미입력" };
       if (a === b) return { status: "correct", message: "정답" };
 
-      if (type === "text") {
-        const similarity = b.length > 0 ? a.length / b.length : 0;
-        if (b.includes(a) && similarity >= 0.85) {
-          return { status: "partial", message: "거의 맞음" };
-        }
+      const ratio = b.length > 0 ? a.length / b.length : 0;
+      if (b.includes(a) && ratio >= 0.85) {
+        return { status: "partial", message: "거의 맞음" };
       }
-
       return { status: "wrong", message: "오답" };
     }
 
-
-    function makeDiffHtml(user, correct, type = "text") {
-      const a = Array.from(type === "ref" ? normalizeBibleRef(user) : normalizeText(user));
-      const b = Array.from(type === "ref" ? normalizeBibleRef(correct) : normalizeText(correct));
+    function makeDiffHtml(user, correct) {
+      const a = Array.from(normalizeText(user));
+      const b = Array.from(normalizeText(correct));
       const m = a.length;
       const n = b.length;
       const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
@@ -457,11 +402,7 @@
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,
-            dp[i][j - 1] + 1,
-            dp[i - 1][j - 1] + cost
-          );
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
         }
       }
 
@@ -500,23 +441,6 @@
       `;
     }
 
-    function clearVerse(verseId, fullMode) {
-      const textInput = document.getElementById(`${verseId}-text`);
-      const textResult = document.getElementById(`${verseId}-text-result`);
-      const refInput = document.getElementById(`${verseId}-ref`);
-      const refResult = document.getElementById(`${verseId}-ref-result`);
-      const hint = document.getElementById(`${verseId}-hint`);
-      const hintBtn = document.getElementById(`${verseId}-hint-btn`);
-
-      if (textInput) textInput.value = "";
-      if (textResult) textResult.innerHTML = "";
-      if (!fullMode && refInput) refInput.value = "";
-      if (!fullMode && refResult) refResult.innerHTML = "";
-      if (hint) hint.innerHTML = "";
-      if (hintBtn) hintBtn.textContent = "힌트 보기";
-      hintStates[verseId] = 0;
-    }
-
     function escapeHtml(text) {
       return (text || "")
         .replace(/&/g, "&amp;")
@@ -526,101 +450,83 @@
         .replace(/'/g, "&#039;");
     }
 
-    function makeSentenceHint(text) {
+    function splitByWords(text) {
       return (text || "")
         .normalize("NFC")
-        .split(/(?<=[.!?])\s+|\n+/)
-        .map(sentence => sentence.trim())
-        .filter(Boolean)
-        .map(sentence => sentence.charAt(0))
-        .join(" / ");
+        .split(/(\s+)/)
+        .map(part => ({ raw: part, isSpace: /^\s+$/.test(part) }));
     }
 
-    function makeWordHint(text) {
-      return (text || "")
-        .normalize("NFC")
-        .split(/\n/)
-        .map(line => {
-          const words = line.trim().split(/\s+/).filter(Boolean);
-          return words.map(word => word.charAt(0)).join(" ");
-        })
-        .join("\n");
+    function maskWord(word, visibleCount) {
+      const chars = Array.from(word);
+      return chars.map((ch, idx) => {
+        if (!/[가-힣A-Za-z0-9]/.test(ch)) return ch;
+        if (idx < visibleCount) return ch;
+        return "_";
+      }).join("");
     }
 
-    function getHintButtonLabel(level) {
-      if (level === 0) return "힌트 보기";
-      if (level === 1) return "2단계 힌트 보기";
-      if (level === 2) return "힌트 숨기기";
-      return "힌트 보기";
+    function makePrompt(text, level) {
+      const parts = splitByWords(text);
+      let wordIndex = 0;
+
+      return parts.map(part => {
+        if (part.isSpace) return part.raw;
+
+        const word = part.raw;
+        const visible = getVisibleCount(word, wordIndex, level);
+        wordIndex++;
+        return maskWord(word, visible);
+      }).join("");
     }
 
-    function getHintHtml(verse, level) {
-      if (level === 1) {
-        return `
-          <div class="hint-box">
-            <div class="hint-level">1단계 힌트 · 문장 첫 음절</div>
-            ${escapeHtml(makeSentenceHint(verse.text))}
-          </div>
-        `;
-      }
+    function getVisibleCount(word, wordIndex, level) {
+      const pureLength = Array.from(word).filter(ch => /[가-힣A-Za-z0-9]/.test(ch)).length;
 
-      if (level === 2) {
-        return `
-          <div class="hint-box">
-            <div class="hint-level">2단계 힌트 · 단어 첫 음절</div>
-            ${escapeHtml(makeWordHint(verse.text))}
-          </div>
-        `;
-      }
-
-      return "";
+      if (level === 1) return pureLength;
+      if (level === 2) return 1;
+      if (level === 3) return wordIndex % 2 === 0 ? 1 : 0;
+      if (level === 4) return wordIndex === 0 ? 1 : 0;
+      return 0;
     }
 
-    function cycleHint(verseId) {
-      const current = hintStates[verseId] || 0;
-      const next = current === 0 ? 1 : current === 1 ? 2 : 0;
-      hintStates[verseId] = next;
+    function renderMiniNav() {
+      const nav = document.getElementById("miniNav");
+      nav.innerHTML = "";
 
-      const verse = selectedGroup.verses.find(v => v.id === verseId);
-      const hintEl = document.getElementById(`${verseId}-hint`);
-      const btnEl = document.getElementById(`${verseId}-hint-btn`);
-
-      if (!verse || !hintEl || !btnEl) return;
-
-      hintEl.innerHTML = getHintHtml(verse, next);
-      btnEl.textContent = getHintButtonLabel(next);
+      Object.entries(VERSES).forEach(([key, section]) => {
+        section.verses.forEach(verse => {
+          const btn = document.createElement("button");
+          btn.className = "mini-btn";
+          btn.textContent = verse.id;
+          btn.onclick = () => selectVerse(verse, true);
+          nav.appendChild(btn);
+        });
+      });
     }
 
-    function renderGroups() {
-      const wrap = document.getElementById("groupList");
+    function renderVerseList() {
+      const wrap = document.getElementById("verseList");
       wrap.innerHTML = "";
 
-      Object.keys(VERSES).forEach(sectionKey => {
-        const section = VERSES[sectionKey];
-        const sectionGroups = GROUPS.filter(g => g.section === sectionKey);
-
+      Object.entries(VERSES).forEach(([key, section]) => {
         const block = document.createElement("div");
-        block.style.marginBottom = "24px";
+        block.className = "section-block";
 
         const badge = document.createElement("div");
         badge.className = "badge";
-        badge.textContent = `${sectionKey}. ${section.title}`;
+        badge.textContent = `${key}. ${section.title}`;
         block.appendChild(badge);
 
         const grid = document.createElement("div");
-        grid.className = "group-grid";
+        grid.className = "verse-grid";
 
-        sectionGroups.forEach(group => {
+        section.verses.forEach(verse => {
           const btn = document.createElement("button");
-          btn.className = "group-btn";
-          if (selectedGroup && selectedGroup.id === group.id) btn.classList.add("active");
-          btn.innerHTML = `<div style="font-weight:800;">${group.id}</div><div class="group-sub">${group.fullMode ? "장-절 제공 / 본문 12구절 작성" : group.verses.map(v => v.id).join(" / ")}</div>`;
-          btn.onclick = () => {
-            selectedGroup = group;
-            hintStates = {};
-            renderGroups();
-            renderTest();
-          };
+          btn.className = "verse-btn";
+          if (selectedVerse && selectedVerse.id === verse.id) btn.classList.add("active");
+          btn.innerHTML = `<div style="font-weight:800;">${verse.id}</div><div class="verse-ref">${verse.ref}</div>`;
+          btn.onclick = () => selectVerse(verse, true);
           grid.appendChild(btn);
         });
 
@@ -629,144 +535,182 @@
       });
     }
 
-    function renderTest() {
-      const area = document.getElementById("testArea");
-      if (!selectedGroup) {
+    function selectVerse(verse, scrollToLearn) {
+      selectedVerse = verse;
+      renderVerseList();
+      renderLearnArea();
+
+      if (scrollToLearn) {
+        setTimeout(() => {
+          document.getElementById("learnArea").scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      }
+    }
+
+    function renderLearnArea() {
+      const area = document.getElementById("learnArea");
+      if (!selectedVerse) {
         area.classList.add("hidden");
         return;
       }
 
       area.classList.remove("hidden");
+
+const steps = [
+  {
+    level: 1,
+    title: "1단계 · 그대로 따라쓰기",
+    desc: "본문을 보면서 그대로 한 번 따라 써보세요.",
+    promptType: "full"
+  },
+
+  {
+    level: 2,
+    title: "2단계 · 각 단어 첫 음절 힌트",
+    desc: "각 단어의 첫 음절만 보고 본문을 채워보세요.",
+    promptType: "mask"
+  },
+
+  {
+    level: 3,
+    title: "3단계 · 절반 힌트",
+    desc: "일부 단어만 첫 음절을 보여줍니다.",
+    promptType: "mask"
+  },
+
+  {
+    level: 4,
+    title: "4단계 · 거의 백지",
+    desc: "첫 단어 첫 음절만 보고 최대한 외워보세요.",
+    promptType: "mask"
+  },
+
+  {
+    level: 5,
+    title: "5단계 · 완전 백지",
+    desc: "힌트 없이 처음부터 끝까지 암송해보세요.",
+    promptType: "blank"
+  }
+];
+
       area.innerHTML = `
-        <div class="top-actions">
+        <div class="learn-header">
           <div>
-            <div class="muted" style="font-weight:700; font-size:14px;">선택한 테스트</div>
-            <h2 style="margin-top:6px;">${selectedGroup.id}</h2>
-            <div class="muted">${selectedGroup.title}</div>
+            <div class="muted" style="font-weight:700; font-size:14px;">선택한 말씀</div>
+            <h2 style="margin-top:6px;">${selectedVerse.id} · ${selectedVerse.ref}</h2>
+            <div class="muted">${getSectionTitle(selectedVerse.id)}</div>
           </div>
           <div class="button-row">
-            <button class="action secondary" id="resetBtn">현재 답안 지우기</button>
-            <button class="action primary" id="gradeBtn">채점하기</button>
+            <button class="action secondary" id="resetAllBtn">전체 지우기</button>
           </div>
         </div>
-        <div id="verseWrap"></div>
-        <div id="scoreWrap"></div>
+        <div id="stepWrap"></div>
+        <div id="progressWrap"></div>
       `;
 
-      const verseWrap = document.getElementById("verseWrap");
-      selectedGroup.verses.forEach((verse, index) => {
+      const stepWrap = document.getElementById("stepWrap");
+      steps.forEach(step => {
         const card = document.createElement("div");
-        card.className = "verse-card";
+        card.className = "step-card";
+        card.style.marginBottom = "52px";
 
-        if (selectedGroup.fullMode) {
-          card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px;">
-              <h3>${index + 1}번 구절</h3>
-              <div class="button-row">
-                <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
-                <button type="button" class="action primary" onclick="gradeVerse('${verse.id}')">채점</button>
-                <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
-              </div>
-            </div>
-            <div class="full-ref">${verse.ref}</div>
-            <label for="${verse.id}-text">말씀 내용</label>
-            <textarea id="${verse.id}-text" placeholder="본문을 적어보세요"></textarea>
-            <button type="button" class="action hint-btn" id="${verse.id}-hint-btn" onclick="cycleHint('${verse.id}')">힌트 보기</button>
-            <div id="${verse.id}-hint" class="hint-wrap"></div>
-            <div id="${verse.id}-text-result" class="result-line"></div>
-          `;
-        } else {
-          card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px;">
-              <h3>${index + 1}번 구절</h3>
-              <div class="button-row">
-                <button type="button" class="action secondary" onclick="clearVerse('${verse.id}', ${selectedGroup.fullMode})">지우기</button>
-                <button type="button" class="action primary" onclick="gradeVerse('${verse.id}')">채점</button>
-                <div class="muted" style="font-size:14px; align-self:center;">${verse.id}</div>
-              </div>
-            </div>
-            <label for="${verse.id}-ref">말씀 장-절</label>
-            <input id="${verse.id}-ref" placeholder="예시 : 창세기 1:1" />
-            <div id="${verse.id}-ref-result" class="result-line"></div>
-            <label for="${verse.id}-text">말씀 내용</label>
-            <textarea id="${verse.id}-text" placeholder="본문을 적어보세요"></textarea>
-            <button type="button" class="action hint-btn" id="${verse.id}-hint-btn" onclick="cycleHint('${verse.id}')">힌트 보기</button>
-            <div id="${verse.id}-hint" class="hint-wrap"></div>
-            <div id="${verse.id}-text-result" class="result-line"></div>
-          `;
-        }
+        let promptHtml = "";
 
-        verseWrap.appendChild(card);
+if (step.promptType === "full") {
+
+  promptHtml =
+    `<div class="full-text-box">
+      ${escapeHtml(selectedVerse.text)}
+    </div>`;
+
+} else if (step.promptType === "blank") {
+
+  const firstChar =
+    Array.from(selectedVerse.text)
+      .find(ch => /[가-힣A-Za-z0-9]/.test(ch)) || "";
+
+  const underlineLength =
+    Math.max(
+      normalizeText(selectedVerse.text).length - 1,
+      20
+    );
+
+  promptHtml =
+    `<div class="prompt-box">
+      ${firstChar}${"_".repeat(underlineLength)}
+    </div>`;
+
+} else {
+
+  promptHtml =
+    `<div class="prompt-box">
+      ${escapeHtml(makePrompt(selectedVerse.text, step.level))}
+    </div>`;
+}
+        card.innerHTML = `
+          <div class="step-title">
+            <div>
+              <h3>${step.title}</h3>
+              <div class="small-note">${step.desc}</div>
+            </div>
+            <div class="button-row">
+              <button class="action secondary" onclick="clearStep(${step.level})">지우기</button>
+              <button class="action primary" onclick="gradeStep(${step.level})">채점</button>
+            </div>
+          </div>
+          ${promptHtml}
+          <label for="step-${step.level}-answer">답안 입력</label>
+          <textarea id="step-${step.level}-answer" placeholder="말씀 본문을 입력하세요"></textarea>
+          <div id="step-${step.level}-result" class="result-line"></div>
+        `;
+
+        stepWrap.appendChild(card);
       });
 
-      document.getElementById("resetBtn").onclick = () => {
-        hintStates = {};
-        renderTest();
-      };
-      document.getElementById("gradeBtn").onclick = gradeCurrent;
+      document.getElementById("resetAllBtn").onclick = () => renderLearnArea();
     }
 
-
-    function gradeVerse(verseId) {
-      if (!selectedGroup) return false;
-
-      const verse = selectedGroup.verses.find(v => v.id === verseId);
-      if (!verse) return false;
-
-      let earned = 0;
-      let total = selectedGroup.fullMode ? 1 : 2;
-
-      const textValue = document.getElementById(`${verse.id}-text`).value;
-      const textResult = compare(textValue, verse.text, "text");
-      const textEl = document.getElementById(`${verse.id}-text-result`);
-      textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? makeDiffHtml(textValue, verse.text, "text") : ""}`;
-      if (textResult.status === "correct") earned += 1;
-
-      if (!selectedGroup.fullMode) {
-        const refValue = document.getElementById(`${verse.id}-ref`).value;
-        const refResult = compare(refValue, verse.ref, "ref");
-        const refEl = document.getElementById(`${verse.id}-ref-result`);
-        refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? makeDiffHtml(refValue, verse.ref, "ref") : ""}`;
-        if (refResult.status === "correct") earned += 1;
-      }
-
-      return earned === total;
+    function clearStep(level) {
+      const input = document.getElementById(`step-${level}-answer`);
+      const result = document.getElementById(`step-${level}-result`);
+      if (input) input.value = "";
+      if (result) result.innerHTML = "";
     }
 
-    function gradeCurrent() {
-      if (!selectedGroup) return;
+    function getSectionTitle(id) {
+      const key = id.split("-")[0];
+      return VERSES[key] ? VERSES[key].title : "";
+    }
 
-      let earned = 0;
-      const total = selectedGroup.fullMode ? selectedGroup.verses.length : selectedGroup.verses.length * 2;
+    function gradeStep(level) {
+      if (!selectedVerse) return false;
+      const input = document.getElementById(`step-${level}-answer`);
+      const resultEl = document.getElementById(`step-${level}-result`);
+      const result = compare(input.value, selectedVerse.text);
 
-      selectedGroup.verses.forEach(verse => {
-        const textValue = document.getElementById(`${verse.id}-text`).value;
-        const textResult = compare(textValue, verse.text, "text");
-        const textEl = document.getElementById(`${verse.id}-text-result`);
-        textEl.innerHTML = `<span class="${textResult.status}">${textResult.message}</span>${textResult.status !== "correct" ? makeDiffHtml(textValue, verse.text, "text") : ""}`;
-        if (textResult.status === "correct") earned += 1;
+      resultEl.innerHTML = `<span class="${result.status}">${result.message}</span>${result.status !== "correct" ? makeDiffHtml(input.value, selectedVerse.text) : ""}`;
+      return result.status === "correct";
+    }
 
-        if (!selectedGroup.fullMode) {
-          const refValue = document.getElementById(`${verse.id}-ref`).value;
-          const refResult = compare(refValue, verse.ref, "ref");
-          const refEl = document.getElementById(`${verse.id}-ref-result`);
-          refEl.innerHTML = `<span class="${refResult.status}">${refResult.message}</span>${refResult.status !== "correct" ? makeDiffHtml(refValue, verse.ref, "ref") : ""}`;
-          if (refResult.status === "correct") earned += 1;
-        }
+    function gradeAll() {
+      let correct = 0;
+      [1,2,3,4,5].forEach(level => {
+        if (gradeStep(level)) correct++;
       });
 
-      const percent = Math.round((earned / total) * 100);
-      document.getElementById("scoreWrap").innerHTML = `
-        <div class="score-box">
-          <div class="muted" style="color:#cbd5e1;">채점 결과</div>
-          <div class="score-big">${earned} / ${total}</div>
+      const percent = Math.round((correct / 4) * 100);
+      document.getElementById("progressWrap").innerHTML = `
+        <div class="progress-box">
+          <div style="color:#cbd5e1;">전체 학습 결과</div>
+          <div style="font-size:38px; font-weight:900; margin:8px 0;">${correct} / 4</div>
           <div style="font-size:18px;">정답률 ${percent}%</div>
-          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">${selectedGroup.fullMode ? "전체 모드는 장-절을 제공하고, 본문 12구절만 채점합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다." : "현재는 장-절 1점, 본문 1점으로 계산합니다. 줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다. 성경 책 이름은 풀네임/약자 모두 정답 처리합니다. 힌트 버튼은 1단계(문장 첫 음절) → 2단계(단어 첫 음절) → 숨기기 순서로 작동합니다."}</div>
+          <div style="margin-top:10px; color:#cbd5e1; font-size:14px;">줄바꿈, 띄어쓰기, 일부 문장부호는 무시하고 비교합니다.</div>
         </div>
       `;
     }
 
-    renderGroups();
+    renderMiniNav();
+    renderVerseList();
   </script>
 </body>
 </html>
